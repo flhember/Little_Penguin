@@ -1,0 +1,30 @@
+From 13761531a9009d158823797f58060dd777851092 Mon Sep 17 00:00:00 2001
+From: flhember <flhember@student.42.fr>
+Date: Fri, 7 Oct 2022 14:35:38 +0200
+Subject: [PATCH] Change EXTRAVERSION
+
+Change EXTRAVERSION to -thor_kernel to modify version string of kernel
+
+Signed-off-by: flhember <flhember@student.42.fr>
+---
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index f659d3085121..d570c9939021 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,8 +1,8 @@
+ # SPDX-License-Identifier: GPL-2.0
+ VERSION = 6
+-PATCHLEVEL = 0
++PATCHLEVEL = 1
+ SUBLEVEL = 0
+-EXTRAVERSION =
++EXTRAVERSION = -thor_kernel
+ NAME = Hurr durr I'ma ninja sloth
+ 
+ # *DOCUMENTATION*
+-- 
+2.38.0
+
