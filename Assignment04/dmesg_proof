@@ -1,0 +1,19 @@
+[  +9,859159] usb 1-4.5: new full-speed USB device number 10 using xhci_hcd
+[  +0,079414] usb 1-4.5: not running at top speed; connect to a high speed hub
+[  +0,003543] usb 1-4.5: New USB device found, idVendor=0627, idProduct=0001, bcdDevice= 0.00
+[  +0,000110] usb 1-4.5: New USB device strings: Mfr=1, Product=2, SerialNumber=9
+[  +0,000818] usb 1-4.5: Product: QEMU USB Mouse
+[  +0,000047] usb 1-4.5: Manufacturer: QEMU
+[  +0,000033] usb 1-4.5: SerialNumber: 89126-0000:00:04.0-4.5
+[  +0,013433] input: QEMU QEMU USB Mouse as /devices/pci0000:00/0000:00:04.0/usb1/1-4/1-4.5/1-4.5:1.0/0003:0627:0001.0008/input/input11
+[  +0,002596] hid-generic 0003:0627:0001.0008: input,hidraw7: USB HID v0.01 Mouse [QEMU QEMU USB Mouse] on usb-0000:00:04.0-4.5/input0
+[10oct. 15:45] usb 1-4.6: new full-speed USB device number 11 using xhci_hcd
+[  +0,079229] usb 1-4.6: not running at top speed; connect to a high speed hub
+[  +0,002224] usb 1-4.6: New USB device found, idVendor=0627, idProduct=0001, bcdDevice= 0.00
+[  +0,000347] usb 1-4.6: New USB device strings: Mfr=1, Product=4, SerialNumber=11
+[  +0,000084] usb 1-4.6: Product: QEMU USB Keyboard
+[  +0,000037] usb 1-4.6: Manufacturer: QEMU
+[  +0,000028] usb 1-4.6: SerialNumber: 68284-0000:00:04.0-4.6
+[  +0,016488] input: QEMU QEMU USB Keyboard as /devices/pci0000:00/0000:00:04.0/usb1/1-4/1-4.6/1-4.6:1.0/0003:0627:0001.0009/input/input12
+[  +0,060359] hid-generic 0003:0627:0001.0009: input,hidraw8: USB HID v1.11 Keyboard [QEMU QEMU USB Keyboard] on usb-0000:00:04.0-4.6/input0
+[  +0,060390] My keyboard module load!
