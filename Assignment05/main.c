@@ -8,20 +8,36 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("flhember");
 MODULE_DESCRIPTION("Misc driver");
 
-#define MAX_SIZE 256
-static char data[MAX_SIZE];
-static size_t data_len;
-
-static ssize_t my_write(struct file *file, const char __user *user_buffer, size_t user_len, loff_t *pos) {
-	pr_info("Test misc write, %zu\n", user_len);
-
+static ssize_t my_write(struct file *file, const char __user *user_buffer, size_t user_len, loff_t *pos){
+	char *login = "flhember";
+	int login_len = strlen(login);
+	char buff[login_len];
+	
+	if (user_len -1 != login_len) {
+		pr_info("Bad size\n");
+		return EINVAL;
+	}
+	copy_from_user(buff, user_buffer, 8);
+	if (strncmp(buff, login, user_len -1) == 0) {
+		pr_info("Good Value\n");
+		return user_len;
+	}
+	pr_info("Bad Value\n");
 	return EINVAL;
 }
 
 static ssize_t my_read(struct file *file, char __user *user_buffer, size_t user_len, loff_t *pos) {
-	pr_info("Test misc read\n");
+	char *login = "flhember\n";
+	int login_len = strlen(login);
 
-	return 0;
+	if (user_len < login_len)
+		return EINVAL;
+	if (*pos != 0)
+		return 0;
+	if (copy_to_user(user_buffer, login, login_len))
+		return EINVAL;
+	*pos = login_len;
+	return login_len;
 }
 
 static const struct file_operations fops = {
