@@ -5,16 +5,23 @@
 #include <linux/fs.h>
 #include <linux/debugfs.h>
 #include <linux/jiffies.h>
+#include <linux/string.h>
+
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("flhember");
 MODULE_DESCRIPTION("Debugfs module");
 
 #define SIZE_LOGIN 8
+#define PAGESIZE 4096
 
 struct dentry *main_dir;
 struct dentry *id_file;
 struct dentry *jiffies_file;
+struct dentry *foo_file;
+
+static char foo_data[PAGESIZE];
+static size_t foo_data_len;
 
 static ssize_t id_write(struct file *file, const char __user *user_buffer, size_t user_len, loff_t *pos)
 {
@@ -80,11 +87,44 @@ static const struct file_operations jiffies_fops = {
 	.read = jiffies_read
 };
 
+static ssize_t foo_read(struct file *file, char __user *user_buffer, size_t user_len, loff_t *pos)
+{
+	size_t len;
+
+        if (user_len < foo_data_len)
+                len = user_len;
+        else
+                len = foo_data_len;
+        if (copy_to_user(user_buffer, foo_data, 10))
+                return -EINVAL;
+        return len;
+}
+
+static ssize_t foo_write(struct file *file, const char __user *user_buffer, size_t user_len, loff_t *pos)
+{
+	if (user_len > foo_data_len)
+		foo_data_len = PAGESIZE;
+	else
+		foo_data_len = user_len;
+	if (copy_from_user(foo_data, user_buffer, foo_data_len))
+                return -EINVAL;
+	return foo_data_len;
+}
+
+static const struct file_operations foo_fops = {
+	.owner = THIS_MODULE,
+	.read = foo_read,
+	.write = foo_write
+};
+
 static int __init ModuleInit(void)
 {
+	pr_info("size page = %d\n", PAGESIZE);
+	memset(foo_data, '\0', PAGESIZE);
 	main_dir = debugfs_create_dir("fortytwo", NULL);
 	id_file = debugfs_create_file("id", 0666, main_dir, NULL, &id_fops);
 	jiffies_file = debugfs_create_file("jiffies", 0444, main_dir, NULL, &jiffies_fops);
+	foo_file = debugfs_create_file("foo", 0777, main_dir, NULL, &foo_fops);
 
 	return 0;
 }
