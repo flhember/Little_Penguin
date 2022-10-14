@@ -6,6 +6,7 @@
 #include <linux/debugfs.h>
 #include <linux/jiffies.h>
 #include <linux/string.h>
+#include <linux/kthread.h>
 
 
 MODULE_LICENSE("GPL");
@@ -20,6 +21,7 @@ struct dentry *id_file;
 struct dentry *jiffies_file;
 struct dentry *foo_file;
 
+struct mutex etx_mutex;
 static char foo_data[PAGESIZE];
 static size_t foo_data_len;
 
@@ -89,25 +91,31 @@ static const struct file_operations jiffies_fops = {
 
 static ssize_t foo_read(struct file *file, char __user *user_buffer, size_t user_len, loff_t *pos)
 {
-	size_t len;
-
-        if (user_len < foo_data_len)
-                len = user_len;
-        else
-                len = foo_data_len;
-        if (copy_to_user(user_buffer, foo_data, 10))
-                return -EINVAL;
-        return len;
+	if (user_len < foo_data_len)
+		return -EINVAL;
+	if (*pos != 0)
+		return 0;
+	if (copy_to_user(user_buffer, foo_data, foo_data_len)) {
+		pr_info("ERROR - READ\n");
+		return -EINVAL;
+	}
+	*pos = foo_data_len;
+	return foo_data_len;
 }
 
 static ssize_t foo_write(struct file *file, const char __user *user_buffer, size_t user_len, loff_t *pos)
 {
-	if (user_len > foo_data_len)
+	mutex_lock(&etx_mutex);
+	memset(foo_data, '\0', PAGESIZE);
+	if (user_len > PAGESIZE)
 		foo_data_len = PAGESIZE;
 	else
 		foo_data_len = user_len;
-	if (copy_from_user(foo_data, user_buffer, foo_data_len))
-                return -EINVAL;
+	if (copy_from_user(foo_data, user_buffer, foo_data_len)) {
+		pr_info("ERROR - WRITE\n");
+		return -EINVAL;
+	}
+	mutex_unlock(&etx_mutex);
 	return foo_data_len;
 }
 
@@ -119,12 +127,11 @@ static const struct file_operations foo_fops = {
 
 static int __init ModuleInit(void)
 {
-	pr_info("size page = %d\n", PAGESIZE);
-	memset(foo_data, '\0', PAGESIZE);
+	mutex_init(&etx_mutex);
 	main_dir = debugfs_create_dir("fortytwo", NULL);
 	id_file = debugfs_create_file("id", 0666, main_dir, NULL, &id_fops);
 	jiffies_file = debugfs_create_file("jiffies", 0444, main_dir, NULL, &jiffies_fops);
-	foo_file = debugfs_create_file("foo", 0777, main_dir, NULL, &foo_fops);
+	foo_file = debugfs_create_file("foo", 0644, main_dir, NULL, &foo_fops);
 
 	return 0;
 }
