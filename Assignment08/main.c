@@ -20,7 +20,7 @@ static const struct file_operations myfd_fops = {
 	.write = &myfd_write
 };
 
-static const struct miscdevice myfd_device = {
+static struct miscdevice myfd_device = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "reverse",
 	.fops = &myfd_fops
@@ -33,7 +33,7 @@ static int __init myfd_init(void)
 {
 	int retval;
 
-	retval = misc_register(&(*(&(myfd_device))));
+	retval = misc_register(&myfd_device);
 	return 1;
 }
 
