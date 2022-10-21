@@ -1,19 +1,16 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
-#include <linux/fs.h>
-
-// test 
-#include <linux/dcache.h>
-#include <linux/path.h>
-#include <linux/mount.h>
-//
-#include <linux/module.h>
-#include <linux/kernel.h>
 #include <linux/sched.h>
+#include <linux/nsproxy.h>
 #include <linux/fs.h>
-#include <linux/namei.h>
-#include <asm/uaccess.h>
+#include <../fs/mount.h>
+#include <linux/mount.h>
+#include <linux/seq_file.h>
+#include <linux/poll.h>
+#include <linux/ns_common.h>
+
+#include <linux/string.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("flhember");
@@ -21,18 +18,40 @@ MODULE_DESCRIPTION("testetst"); // a faire
 
 static struct proc_dir_entry *mymounts_file;
 
+static char *print_mount(const char *name, struct path p)
+{
+	size_t size;
+	char *path;
+	char buf[1024];
+	char *final = NULL;
+
+	size = strlen(name) + 1;
+	path = d_path(&p, buf, 1024);
+	size += strlen(path);
+
+	final = kmalloc(size, GFP_USER);
+	strcpy(final, name);
+	strcat(final, " ");
+	strcat(final, path);
+	return final;
+}
+
 static ssize_t my_read(struct file *file, char __user *user_buffer, size_t user_len, loff_t *pos)
 {
-	pr_info("myread ft !\n");
+	struct mnt_namespace *ns = current->nsproxy->mnt_ns;
+	struct mount *mnt;
+	struct path p;
+	char *final;
+	size_t size;
 
-	struct dentry *curdentry;
-
-	//printk("%s just for test\n", curdentry->d_name);
-	/*list_for_each_entry(curdentry, &current->d_subdirs, d_child)
-	{
-		if ( curdentry->d_flags & DCACHE_MOUNTED)
-		printk("%s is mounted", curdentry->d_name.name);
-	}*/
+	list_for_each_entry(mnt, &ns->list, mnt_list) {
+		p.mnt = &mnt->mnt;
+		p.dentry = mnt->mnt.mnt_root;
+		final = print_mount(mnt->mnt_devname, p);
+		size = strlen(final);
+		pr_info("!%s!\n", final);
+		simple_read_from_buffer(user_buffer, user_len, pos, "salut", 5);
+	}
 	return 0;
 }
 
