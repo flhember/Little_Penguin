@@ -9,50 +9,51 @@
 #include <linux/seq_file.h>
 #include <linux/poll.h>
 #include <linux/ns_common.h>
-
 #include <linux/string.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("flhember");
-MODULE_DESCRIPTION("testetst"); // a faire
+MODULE_DESCRIPTION("Module to show mount point");
+
+#define PAGESIZE 4096
 
 static struct proc_dir_entry *mymounts_file;
 
-static char *print_mount(const char *name, struct path p)
+static void print_mount(const char *name, struct path p, char *final)
 {
-	size_t size;
 	char *path;
 	char buf[1024];
-	char *final = NULL;
 
-	size = strlen(name) + 1;
 	path = d_path(&p, buf, 1024);
-	size += strlen(path);
-
-	final = kmalloc(size, GFP_USER);
-	strcpy(final, name);
+	strcat(final, name);
 	strcat(final, " ");
 	strcat(final, path);
-	return final;
+	strcat(final, "\n");
 }
 
 static ssize_t my_read(struct file *file, char __user *user_buffer, size_t user_len, loff_t *pos)
 {
-	struct mnt_namespace *ns = current->nsproxy->mnt_ns;
-	struct mount *mnt;
-	struct path p;
-	char *final;
+	int ret;
 	size_t size;
+	struct path p;
+	char *final_buf;
+	struct mount *mnt;
+	struct mnt_namespace *ns = current->nsproxy->mnt_ns;
 
+	if (*pos != 0)
+		return 0;
+	final_buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	memset(final_buf, '\0', PAGE_SIZE);
 	list_for_each_entry(mnt, &ns->list, mnt_list) {
 		p.mnt = &mnt->mnt;
 		p.dentry = mnt->mnt.mnt_root;
-		final = print_mount(mnt->mnt_devname, p);
-		size = strlen(final);
-		pr_info("!%s!\n", final);
-		simple_read_from_buffer(user_buffer, user_len, pos, "salut", 5);
+		print_mount(mnt->mnt_devname, p, final_buf);
 	}
-	return 0;
+	strcat(final_buf, "\0");
+	size = strlen(final_buf);
+	ret = simple_read_from_buffer(user_buffer, user_len, pos, final_buf, size);
+	kfree(final_buf);
+	return ret;
 }
 
 static struct proc_ops my_fops = {
