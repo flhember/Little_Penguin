@@ -1,0 +1,1 @@
+ACTION=="add", SUBSYSTEM=="input", ATTRS{configuration}=="HID Keyboard", RUN+="/usr/sbin/insmod /root/Assignment04/main.ko"
