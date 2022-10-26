@@ -1,0 +1,13 @@
+-bash-5.1# ls
+foo  id  jiffies
+-bash-5.1# cat id
+flhember
+-bash-5.1# echo -n "flhember" > id
+-bash-5.1# echo -n "oui" > id
+-bash: echo: erreur d'�criture : Argument invalide
+-bash-5.1# cat jiffies 
+4295705312
+-bash-5.1# echo "Salut" > foo
+-bash-5.1# cat foo
+Salut
+

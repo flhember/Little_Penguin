@@ -27,16 +27,17 @@ static size_t foo_data_len;
 
 static ssize_t id_write(struct file *file, const char __user *user_buffer, size_t user_len, loff_t *pos)
 {
+	char buff[8];
 	char *login = "flhember";
-	char buff[SIZE_LOGIN];
+	size_t size = strlen(login);
 
-	if (user_len - 1 != SIZE_LOGIN) {
-		pr_info("Bad size\n");
+	if (user_len != size) {
+		pr_info("Bad size, good size is %zu\n", size);
 		return -EINVAL;
 	}
-	if (copy_from_user(buff, user_buffer, 8))
+	if (!simple_write_to_buffer(buff, size, pos, user_buffer, user_len))
 		return -EINVAL;
-	if (strncmp(buff, login, user_len - 1) == 0) {
+	if (strncmp(buff, login, size) == 0) {
 		pr_info("Good Value\n");
 		return user_len;
 	}
@@ -47,16 +48,8 @@ static ssize_t id_write(struct file *file, const char __user *user_buffer, size_
 static ssize_t id_read(struct file *file, char __user *user_buffer, size_t user_len, loff_t *pos)
 {
 	char *login = "flhember\n";
-	size_t len = strlen(login);
 
-	if (user_len < len)
-		return -EINVAL;
-	if (*pos != 0)
-		return 0;
-	if (copy_to_user(user_buffer, login, len))
-		return -EINVAL;
-	*pos = len;
-	return len;
+	return simple_read_from_buffer(user_buffer, user_len, pos, login, strlen(login));
 }
 
 static const struct file_operations id_fops = {
@@ -68,20 +61,11 @@ static const struct file_operations id_fops = {
 static ssize_t jiffies_read(struct file *file, char __user *user_buffer, size_t user_len, loff_t *pos)
 {
 	char buffer[50];
-	size_t len = 0;
 	unsigned long jiffies_value = jiffies;
 
 	sprintf(buffer, "%lu", jiffies_value);
 	strcat(buffer, "\n");
-	len = strlen(buffer);
-	if (user_len < len)
-		return -EINVAL;
-	if (*pos != 0)
-		return 0;
-	if (copy_to_user(user_buffer, buffer, len))
-		return -EINVAL;
-	*pos = len;
-	return len;
+	return simple_read_from_buffer(user_buffer, user_len, pos, buffer, strlen(buffer));
 }
 
 static const struct file_operations jiffies_fops = {
@@ -91,32 +75,24 @@ static const struct file_operations jiffies_fops = {
 
 static ssize_t foo_read(struct file *file, char __user *user_buffer, size_t user_len, loff_t *pos)
 {
-	if (user_len < foo_data_len)
-		return -EINVAL;
-	if (*pos != 0)
-		return 0;
-	if (copy_to_user(user_buffer, foo_data, foo_data_len)) {
-		pr_info("ERROR - READ\n");
-		return -EINVAL;
-	}
-	*pos = foo_data_len;
-	return foo_data_len;
+	return simple_read_from_buffer(user_buffer, user_len, pos, foo_data, foo_data_len);
 }
 
 static ssize_t foo_write(struct file *file, const char __user *user_buffer, size_t user_len, loff_t *pos)
 {
+	ssize_t ret = 0;
+
 	mutex_lock(&etx_mutex);
 	memset(foo_data, '\0', PAGESIZE);
-	if (user_len > PAGESIZE)
-		foo_data_len = PAGESIZE;
-	else
-		foo_data_len = user_len;
-	if (copy_from_user(foo_data, user_buffer, foo_data_len)) {
-		pr_info("ERROR - WRITE\n");
+	if (user_len >= PAGESIZE) {
+		pr_info("Bad Value - Size to big\n");
+		mutex_unlock(&etx_mutex);
 		return -EINVAL;
 	}
+	foo_data_len = user_len;
+	ret = simple_write_to_buffer(foo_data, PAGE_SIZE, pos, user_buffer, user_len);
 	mutex_unlock(&etx_mutex);
-	return foo_data_len;
+	return ret;
 }
 
 static const struct file_operations foo_fops = {
