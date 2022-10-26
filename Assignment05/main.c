@@ -10,20 +10,19 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("flhember");
 MODULE_DESCRIPTION("Misc driver");
 
-#define SIZE_LOGIN 8
-
 static ssize_t my_write(struct file *file, const char __user *user_buffer, size_t user_len, loff_t *pos)
 {
+	char buff[8];
 	char *login = "flhember";
-	char buff[SIZE_LOGIN];
+	size_t size = strlen(login);
 
-	if (user_len - 1 != SIZE_LOGIN) {
-		pr_info("Bad size\n");
+	if (user_len != size) {
+		pr_info("Bad size, good size is %zu\n", size);
 		return -EINVAL;
 	}
-	if (copy_from_user(buff, user_buffer, 8))
+	if (!simple_write_to_buffer(buff, size, pos, user_buffer, user_len))
 		return -EINVAL;
-	if (strncmp(buff, login, user_len - 1) == 0) {
+	if (strncmp(buff, login, size) == 0) {
 		pr_info("Good Value\n");
 		return user_len;
 	}
@@ -34,16 +33,8 @@ static ssize_t my_write(struct file *file, const char __user *user_buffer, size_
 static ssize_t my_read(struct file *file, char __user *user_buffer, size_t user_len, loff_t *pos)
 {
 	char *login = "flhember\n";
-	size_t len = strlen(login);
 
-	if (user_len < len)
-		return -EINVAL;
-	if (*pos != 0)
-		return 0;
-	if (copy_to_user(user_buffer, login, len))
-		return -EINVAL;
-	*pos = len;
-	return len;
+	return simple_read_from_buffer(user_buffer, user_len, pos, login, strlen(login));
 }
 
 static const struct file_operations fops = {

@@ -1,0 +1,6 @@
+-bash-5.1# cat /dev/fortytwo 
+flhember
+-bash-5.1# echo -n "flhember" > /dev/fortytwo 
+-bash-5.1#  
+-bash-5.1# echo -n "flhemsber" > /dev/fortytwo 
+-bash: echo: erreur d'�criture : Argument invalide
