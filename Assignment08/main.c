@@ -27,45 +27,41 @@ static struct miscdevice myfd_device = {
 };
 
 char str[PAGE_SIZE];
-char *tmp;
 
 static int __init myfd_init(void)
 {
 	int retval;
 
 	retval = misc_register(&myfd_device);
-	return 1;
+	return retval;
 }
 
 static void __exit myfd_cleanup(void)
 {
-
+	misc_deregister(&myfd_device);
 }
 
 ssize_t myfd_read(struct file *fp, char __user *user, size_t size, loff_t *offs)
 {
-	size_t t, i;
-	char *tmp2;
+	size_t t;
+	size_t s;
+	char *tmp;
 
-	/*
-	 * Malloc like a boss
-	 */
-	tmp2 = kmalloc(sizeof(char) * PAGE_SIZE * 2, GFP_KERNEL);
-	tmp = tmp2;
-	for (t = strlen(str) - 1, i = 0; t >= 0; t--, i++)
-		tmp[i] = str[t];
-	tmp[i] = 0x0;
-	return simple_read_from_buffer(user, size, offs, tmp, i);
+	/** Malloc like a boss **/
+	tmp = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	memset(tmp, '\0', PAGE_SIZE);
+	for (s = strlen(str) - 1, t = 0; t < strlen(str); s--, t++)
+		tmp[t] = str[s];
+	tmp[t] = 0x0;
+	return simple_read_from_buffer(user, size, offs, tmp, t);
 }
 
 ssize_t myfd_write(struct file *fp, const char __user *user, size_t size, loff_t *offs)
 {
 	ssize_t res;
 
-	res = 0;
-	res = simple_write_to_buffer(str, size, offs, user, size) + 1;
-	// 0x0 = ’\0’
-	str[size + 1] = 0x0;
+	memset(str, '\0', PAGE_SIZE);
+	res = simple_write_to_buffer(str, PAGE_SIZE, offs, user, size);
 	return res;
 }
 
