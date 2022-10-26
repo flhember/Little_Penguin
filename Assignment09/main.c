@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-only
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
@@ -56,7 +58,7 @@ static ssize_t my_read(struct file *file, char __user *user_buffer, size_t user_
 	return ret;
 }
 
-static struct proc_ops my_fops = {
+static const struct proc_ops my_fops = {
 	.proc_read = my_read
 };
 
